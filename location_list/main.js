@@ -5,14 +5,19 @@
  * 由于地图坐标不够准确，所以在确定一个位置是否在多变性范围内时，处于边界附近的点可能得出与实际相反的结果
  * AJAX请求返回的xhr.responseText：“查询门店列表”接口返回值中business_list数组的json格式字符串。
  * 微信的该接口默认每次查询20个门店，如果你的门店多于20个，应确保这里请求到所有门店组成的business_list
+ *
+ * 范围计算时是使用平面多边形而非地球曲面，所以不适用跨度较大的面积范围
  */
 
+ /*
+  * TODO:
+  * 1. 指出自己测试时的误差距离，包括联通wifi和电信4g
+  */
 
 (function ()
 {
 
 	// 设定数据 ----------------------------------------------------------------------------------------
-	
 	// AJAX请求地址
 	var sBusinessListAJAXUrl = "http://funca.cn/HaoyunlaiWechat/api/api.php?store_list";
 	
@@ -21,6 +26,7 @@
 		aPolygonY = [41.759525, 41.753383, 41.739262, 41.723704, 41.710215, 41.702494, 41.709657, 41.716173, 41.731739, 41.740957];
 
 
+		
 	// 微信API配置 -------------------------------------------------------------------------------------
 	wx.config({
 		//debug: true,
@@ -33,8 +39,32 @@
 	});
 
 	
+
+	// 请求门店数据 -------------------------------------------------------------------------------------
+	var xhr = new XMLHttpRequest();
+	xhr.addEventListener('readystatechange', function ()
+	{
+		if (xhr.readyState == 4){
+			if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304){
+				AjaxSuccessCallback(xhr.responseText);
+			}
+			else{
+				alert("请求门店信息失败。请联系公众号客服。");
+				throw new Error("请求门店信息失败");
+			}
+		}
+	}, false);
+	xhr.open("get", sBusinessListAJAXUrl, true);
+	xhr.send(null);
 	
-	// AJAX回调 -----------------------------------------------------------------------------------------
+	
+	
+	// 函数定义 ----------------------------------------------------------------------------------------
+	// 本应用中函数 --------------------------------------------
+	// AJAX请求成功响应之后的回调
+	/*
+	 * 参数是响应成功后的responseText
+	 */
 	function AjaxSuccessCallback(sResponseText)
 	{
 		var sStoreInfo = sResponseText;
@@ -56,34 +86,6 @@
 		});
 	};
 
-	
-	
-
-	// 请求门店数据 -------------------------------------------------------------------------------------
-	var xhr = new XMLHttpRequest();
-	xhr.addEventListener('readystatechange', function ()
-	{
-		if (xhr.readyState == 4){
-			if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304){
-				console.log(xhr.responseText);
-				AjaxSuccessCallback(xhr.responseText);
-			}
-			else{
-				alert("请求门店信息失败。请联系公众号客服。");
-				throw new Error("请求门店信息失败");
-			}
-		}
-	}, false);
-	xhr.open("get", sBusinessListAJAXUrl, true);
-	xhr.send(null);
-	
-	
-	
-	
-	
-	// 函数定义 ----------------------------------------------------------------------------------------
-	
-	// 本应用中函数 --------------------------------------------
 	// 用户同意授权地理位置后执行的函数
 	/*
 	 * 参数为微信getLocation接口获取授权成功时的回调函数的参数
@@ -94,8 +96,7 @@
 			latitude = res.latitude; 
 
 		// 根据门店距离用户位置来重排序门店数组
-		aStoreBaseInfo.sort(function (a, b)
-		{
+		aStoreBaseInfo.sort(function (a, b){
 			return getDistanceByCoordinates(longitude, latitude, a.longitude, a.latitude) - getDistanceByCoordinates(longitude, latitude, b.longitude, b.latitude);
 		});
 	}
@@ -242,6 +243,5 @@
 		});
 		return point.within(polygon);
 	}
-	
 
 })();
