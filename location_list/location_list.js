@@ -5,7 +5,7 @@
 
 	// 设定数据 ----------------------------------------------------------------------------------------
 	// AJAX请求地址
-	var sBusinessListAJAXUrl = "http://funca.cn/HaoyunlaiWechat/api/api.php?store_list";
+	var sBusinessListAJAXUrl = "";
 	
 	// 配送范围多边形顶点坐标
 	var aPolygonX = [125.986678, 125.993416, 125.968515, 125.953746, 125.945859, 125.934379, 125.920886, 125.920958, 125.931684, 125.939095],
@@ -74,7 +74,7 @@
 
 	// 用户同意授权地理位置后执行的函数
 	/*
-	 * 参数为微信getLocation接口获取授权成功时的回调函数的参数
+	 * 第一个参数为微信getLocation接口获取授权成功时的回调函数的参数
 	 */
 	function getLocationSuccessCallback(res, aStoreBaseInfo)
 	{

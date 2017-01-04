@@ -1,6 +1,6 @@
 <?php
 require_once "jssdk.php";
-$jssdk = new JSSDK("wx94d7908c2964b01b", "333007ca6e4ee685899896acb6ed1452");
+$jssdk = new JSSDK("", ""); // 微信公众号APPID和APPSECRET
 $signPackage = $jssdk->GetSignPackage();
 ?>
 <!doctype html>
@@ -17,7 +17,7 @@ $signPackage = $jssdk->GetSignPackage();
 <script src="terraformer@1.0.7.js"></script>
 <script>
 <?php
-	require "main.js";
+	require "location_list.js";
 ?>
 </script>
 </html>
