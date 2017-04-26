@@ -1,9 +1,9 @@
-<?php	
- 
+<?php
+
 	class RedPacket
 	{
         private $curl_post_ssl_err = '';
-		
+
 		private function curl_post_ssl($url, $data, $second=30,$aHeader=array())
 		{
 			$ch = curl_init();
@@ -16,14 +16,14 @@
 			curl_setopt($ch,CURLOPT_URL,$url);
 			curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,false);
 			curl_setopt($ch,CURLOPT_SSL_VERIFYHOST,false);
-			
+
 			curl_setopt($ch,CURLOPT_SSLCERT, CERT_PEM);
 			curl_setopt($ch, CURLOPT_SSLKEY, KEY_PEM);
 
 			if( count($aHeader) >= 1 ){
 				curl_setopt($ch, CURLOPT_HTTPHEADER, $aHeader);
 			}
-		 
+
 			curl_setopt($ch, CURLOPT_POST, 1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 			$result = curl_exec($ch);
@@ -33,15 +33,15 @@
 				curl_close($ch);
 				return $result;
 			}
-			else { 
+			else {
 				$error = curl_errno($ch);
 				$this->curl_post_ssl_err = $error;
 				curl_close($ch);
 				return false;
 			}
 		}
-		
-		
+
+
 		// 不精确的生成一天之内不重复的十位数字字符串
 		/*
 		 *	所谓不精确：返回的是当前秒数精确到后四位的浮点数。即如果在万分之一秒内两次执行，则返回重复的值
@@ -53,9 +53,9 @@
 			$second = date("s");
 			return $hour . $minute . $second . substr(microtime(), 2, 4);
 		}
-	
+
 		// 生成随机字符串
-		private function generateRandomString($length) 
+		private function generateRandomString($length)
 		{
 			$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 			$charactersLength = strlen($characters);
@@ -66,13 +66,13 @@
 			}
 			return $randomString;
 		}
-		
+
 		// 生成mch_billno
 		private function generateMchBillno()
 		{
 			return MCH_ID . date('Ymd') . $this->generateNonredundantNumberOndDay_i();
 		}
-		
+
 		// 数组转换成XML字符串
 		private function arrayToDataXMLString($array)
 		{
@@ -80,18 +80,18 @@
 			{
 				return "<$key><![CDATA[$value]]></$key>";
 			}
-			
+
 			function __forEach($array)
-			{	
+			{
 				$data = "";
 				foreach($array as $key=>$value)
 				{
 					if( is_array($value) )
-					{	
+					{
 						__forEach($value);
 					}
 					else
-					{	
+					{
 						$data .= makeXMLNodeStr($key, $value);
 					}
 				}
@@ -99,7 +99,7 @@
 			}
 			return "<xml>" . __forEach($array) . "</xml>";
 		}
-		
+
 		// 生成签名
 		private function getSign($aArgument, $sMerchantKey)
 		{
@@ -110,11 +110,11 @@
 				$stringA .= $key . '=' . $value . '&';
 			}
 			$stringA = substr($stringA, 0, -1);
-			
+
 			$stringSignTemp = $stringA . '&key=' . $sMerchantKey;
 			return $sign = strtoupper( MD5($stringSignTemp) );
 		}
-		
+
 		// 发送红包
 		/*
 		 *  兼容普通红包和裂变红包
@@ -123,7 +123,7 @@
 		 *  第三个参数如果填3到20之间的整数，则发送裂变该整数份的裂变红包。否则默认为1，发送普通红包
 		 */
 		public function sendRedPack($re_openid, $nCent, $num=1 )
-		{	
+		{
 			$nonce_str = $this->generateRandomString(32);
 			$mch_billno = $this->generateMchBillno();
 			$total_amount = $nCent; // 红包额度。单位分。
@@ -142,14 +142,15 @@
 				"act_name"=> ACT_NAME,
 				"remark"=> REMARK
 			);
-			
+
 			$url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/sendredpack';
-			
+
 			if( $num>2 ){ // 列表红包
+                // ALL_RAND 如果不加引号，第一个领取的人或领到绝大多数的金额
 				$aArgumentsWithoutSign['amt_type'] = 'ALL_RAND';
 				$url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/sendgroupredpack';
 			}
-		
+
 			$sign = $this->getSign($aArgumentsWithoutSign, MCH_KEY);
 			$aArgumentsWithoutSign["sign"] = $sign;
 			$aArgument = $aArgumentsWithoutSign;
